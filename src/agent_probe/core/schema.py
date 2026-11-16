@@ -47,6 +47,8 @@ class Observation(BaseModel):
     output: Any
     is_error: bool = False
     is_mocked: bool = False
+    is_replayed: bool = False
+    error_type: str | None = None
 
 
 class TrajectoryStep(BaseModel):
@@ -70,6 +72,8 @@ class Trajectory(BaseModel):
     final_output: str | None = None
     status: Literal["SUCCESS", "FAILED", "TIMEOUT", "LOOP_ABORTED"]
     steps: list[TrajectoryStep]
+    parent_trace_id: str | None = None
+    fork_step_id: int | None = Field(default=None, ge=0)
 
     @computed_field
     @property
