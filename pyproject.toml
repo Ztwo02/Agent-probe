@@ -7,7 +7,26 @@ name = "agent-probe"
 version = "0.1.0"
 description = "Lightweight, local-first white-box trajectory evaluation & replay harness for AI Agents."
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.10"
+keywords = [
+    "ai-agents",
+    "agent-evaluation",
+    "trajectory-diff",
+    "agent-harness",
+    "llm-testing",
+    "white-box-testing",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+]
 dependencies = [
     "pydantic>=2.0",
     "typer>=0.12.0",
@@ -15,6 +34,12 @@ dependencies = [
     "pyyaml>=6.0",
     "jinja2>=3.1.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Ztwo02/Agent-probe"
+Repository = "https://github.com/Ztwo02/Agent-probe"
+Issues = "https://github.com/Ztwo02/Agent-probe/issues"
+"Live Demo" = "https://ztwo02.github.io/Agent-probe/"
 
 [project.optional-dependencies]
 dev = [
