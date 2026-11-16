@@ -24,7 +24,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install package and dev dependencies
-        run: uv pip install --system -e ".[dev]"
+        run: |
+          uv venv .venv --python 3.11
+          uv pip install --python .venv/bin/python -e ".[dev]"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Lint with Ruff
         run: ruff check src/ tests/
