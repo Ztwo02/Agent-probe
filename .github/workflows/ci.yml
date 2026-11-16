@@ -1,0 +1,58 @@
+name: CI & Live Demo Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Ztwo02/Agent-probe
+        uses: actions/checkout@v4
+
+      - name: Install uv and setup Python 3.11
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install package and dev dependencies
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Lint with Ruff
+        run: ruff check src/ tests/
+
+      - name: Run Unit Tests with Pytest
+        run: pytest -v
+
+      - name: Generate Live Demo HTML Report
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p public
+          agent-probe demo
+          mv probe_demo_report.html public/index.html
+
+      - name: Upload GitHub Pages Artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  deploy-pages:
+    needs: test-and-build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
