@@ -63,3 +63,12 @@ src/agent_probe/
     └── templates/
         └── report.html.j2   # Inline CSS/JS trace diff UI template
 ```
+
+## Live Demo
+
+View the latest auto-deployed single-file trajectory diff report on GitHub Pages:
+[https://ztwo02.github.io/Agent-probe/](https://ztwo02.github.io/Agent-probe/)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
