@@ -5,6 +5,8 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
+English | [简体中文](README.zh-CN.md)
+
 Lightweight, local-first white-box trajectory evaluation & replay harness for AI Agents (`pytest` + `Playwright Trace Viewer` for Agent execution paths).
 
 ## Features
