@@ -35,12 +35,62 @@ jobs:
       - name: Run Unit Tests with Pytest
         run: pytest -v
 
-      - name: Generate Live Demo HTML Report
+      - name: Generate Live Demo HTML Reports
         if: github.ref == 'refs/heads/main'
         run: |
           mkdir -p public
-          agent-probe demo
-          mv probe_demo_report.html public/index.html
+          agent-probe demo --html public/demo.html
+          agent-probe harness-demo --html public/harness.html
+          cat <<'EOF' > public/index.html
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Agent-Probe Live Demo — White-Box Trajectory &amp; Harness Reports</title>
+            <style>
+              * { box-sizing: border-box; }
+              html, body { margin: 0; height: 100%; font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f7f7f8; color: #18181b; }
+              .shell { display: flex; flex-direction: column; height: 100%; }
+              .topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 24px; background: #ffffff; border-bottom: 1px solid #e4e4e7; }
+              .title-wrap { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: #18181b; }
+              .dot { width: 7px; height: 7px; border-radius: 50%; background: #18181b; }
+              .tabs { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+              .tab { border: 1px solid #e4e4e7; background: #ffffff; color: #3f3f46; border-radius: 7px; padding: 6px 12px; font-size: 12.5px; font-weight: 500; cursor: pointer; }
+              .tab:hover { background: #fafafa; border-color: #d4d4d8; color: #18181b; }
+              .tab.active { background: #18181b; border-color: #18181b; color: #ffffff; }
+              .standalone-link { font-size: 12.5px; color: #52525b; text-decoration: none; padding: 6px 10px; border-radius: 7px; border: 1px solid #e4e4e7; }
+              .standalone-link:hover { color: #18181b; background: #fafafa; }
+              iframe { flex: 1; width: 100%; border: none; background: #f7f7f8; }
+            </style>
+          </head>
+          <body>
+            <div class="shell">
+              <nav class="topbar">
+                <div class="title-wrap">
+                  <span class="dot"></span>
+                  <span>Agent-Probe Live Showcase</span>
+                </div>
+                <div class="tabs">
+                  <button type="button" class="tab active" id="tab-harness" onclick="switchView('harness')">Phase 2: Sandbox &amp; Fork Replay</button>
+                  <button type="button" class="tab" id="tab-demo" onclick="switchView('demo')">Phase 1: Offline Trace Diff</button>
+                  <a class="standalone-link" id="open-standalone" href="./harness.html" target="_blank" rel="noopener">Open Standalone &#8599;</a>
+                </div>
+              </nav>
+              <iframe id="report-frame" src="./harness.html" title="Agent-Probe Report"></iframe>
+            </div>
+            <script>
+              function switchView(view) {
+                var src = view === 'demo' ? './demo.html' : './harness.html';
+                document.getElementById('report-frame').src = src;
+                document.getElementById('open-standalone').href = src;
+                document.getElementById('tab-harness').classList.toggle('active', view === 'harness');
+                document.getElementById('tab-demo').classList.toggle('active', view === 'demo');
+              }
+            </script>
+          </body>
+          </html>
+          EOF
 
       - name: Upload GitHub Pages Artifact
         if: github.ref == 'refs/heads/main'
