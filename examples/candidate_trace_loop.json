@@ -1,0 +1,155 @@
+{
+  "trace_id": "trace-candidate-20261116-002",
+  "agent_version": "aftersales-agent-v1.1.0-prompt-beta",
+  "task_input": "我的订单 ORD-20261116-8891 已经下单三天了还没送到，怎么处理？",
+  "final_output": null,
+  "status": "LOOP_ABORTED",
+  "steps": [
+    {
+      "step_id": 1,
+      "state": "TOOL_EXECUTION",
+      "thought": "首先调用 query_logistics 查询订单 ORD-20261116-8891 的基础物流状态。",
+      "action": {
+        "tool_name": "query_logistics",
+        "arguments": {
+          "order_id": "ORD-20261116-8891"
+        }
+      },
+      "observation": {
+        "output": {
+          "order_id": "ORD-20261116-8891",
+          "carrier": "SF-Express",
+          "status": "CARRIER_SYNC_PENDING",
+          "delay_hours": null
+        },
+        "is_error": false,
+        "is_mocked": false
+      },
+      "latency_ms": 155.0,
+      "tokens": {
+        "prompt_tokens": 225,
+        "completion_tokens": 48,
+        "total_tokens": 273
+      }
+    },
+    {
+      "step_id": 2,
+      "state": "TOOL_EXECUTION",
+      "thought": "基础物流未返回精确延误时长，开启 realtime_refresh=true 再次查询承运商实时节点。",
+      "action": {
+        "tool_name": "query_logistics",
+        "arguments": {
+          "order_id": "ORD-20261116-8891",
+          "realtime_refresh": true
+        }
+      },
+      "observation": {
+        "output": {
+          "error": "504 Gateway Timeout from carrier SF-Express"
+        },
+        "is_error": true,
+        "is_mocked": false
+      },
+      "latency_ms": 1210.5,
+      "tokens": {
+        "prompt_tokens": 390,
+        "completion_tokens": 62,
+        "total_tokens": 452
+      }
+    },
+    {
+      "step_id": 3,
+      "state": "TOOL_EXECUTION",
+      "thought": "实时物流查询超时失败，按新 Prompt 重试逻辑再次使用相同参数调用 query_logistics。",
+      "action": {
+        "tool_name": "query_logistics",
+        "arguments": {
+          "order_id": "ORD-20261116-8891",
+          "realtime_refresh": true
+        }
+      },
+      "observation": {
+        "output": {
+          "error": "504 Gateway Timeout from carrier SF-Express"
+        },
+        "is_error": true,
+        "is_mocked": false
+      },
+      "latency_ms": 1205.0,
+      "tokens": {
+        "prompt_tokens": 520,
+        "completion_tokens": 68,
+        "total_tokens": 588
+      }
+    },
+    {
+      "step_id": 4,
+      "state": "TOOL_EXECUTION",
+      "thought": "仍返回 504 超时，继续使用相同参数重复调用 query_logistics 试图获取延误数据。",
+      "action": {
+        "tool_name": "query_logistics",
+        "arguments": {
+          "order_id": "ORD-20261116-8891",
+          "realtime_refresh": true
+        }
+      },
+      "observation": {
+        "output": {
+          "error": "504 Gateway Timeout from carrier SF-Express"
+        },
+        "is_error": true,
+        "is_mocked": false
+      },
+      "latency_ms": 1220.4,
+      "tokens": {
+        "prompt_tokens": 650,
+        "completion_tokens": 70,
+        "total_tokens": 720
+      }
+    },
+    {
+      "step_id": 5,
+      "state": "TOOL_EXECUTION",
+      "thought": "再次发起相同的实时物流查询请求，未触发降级或人工转接策略。",
+      "action": {
+        "tool_name": "query_logistics",
+        "arguments": {
+          "order_id": "ORD-20261116-8891",
+          "realtime_refresh": true
+        }
+      },
+      "observation": {
+        "output": {
+          "error": "504 Gateway Timeout from carrier SF-Express"
+        },
+        "is_error": true,
+        "is_mocked": false
+      },
+      "latency_ms": 1198.2,
+      "tokens": {
+        "prompt_tokens": 780,
+        "completion_tokens": 75,
+        "total_tokens": 855
+      }
+    },
+    {
+      "step_id": 6,
+      "state": "ERROR",
+      "thought": "连续重复调用同一失败工具且上下文 Token 严重超支，触发熔断中止执行。",
+      "action": null,
+      "observation": {
+        "output": {
+          "error": "Execution aborted: consecutive identical tool loop & token budget exceeded"
+        },
+        "is_error": true,
+        "is_mocked": false
+      },
+      "latency_ms": 45.0,
+      "tokens": {
+        "prompt_tokens": 820,
+        "completion_tokens": 42,
+        "total_tokens": 862
+      }
+    }
+  ]
+}

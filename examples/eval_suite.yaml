@@ -1,0 +1,31 @@
+suite_name: "ecommerce-aftersales-sla-suite"
+rules:
+  - type: max_steps
+    name: "max_steps_within_5"
+    params:
+      max_steps: 5
+
+  - type: token_budget
+    name: "token_budget_under_1800"
+    params:
+      max_tokens: 1800
+
+  - type: loop_detection
+    name: "no_consecutive_tool_loop"
+    params:
+      max_consecutive_repeats: 2
+
+  - type: required_tool_call
+    name: "must_issue_delay_coupon"
+    params:
+      tool_name: "issue_coupon"
+      expected_args_subset:
+        reason: "logistics_delay_48h"
+
+  - type: path_match
+    name: "logistics_before_coupon_path"
+    params:
+      expected_sequence:
+        - "query_logistics"
+        - "issue_coupon"
+      mode: "subsequence"
