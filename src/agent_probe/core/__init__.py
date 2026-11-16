@@ -1,5 +1,6 @@
 """Core domain layer: schemas, evaluation engine, and trajectory differ."""
 
+from agent_probe.core.differ import diff_trajectories
 from agent_probe.core.engine import EvaluationEngine, SuiteConfigError
 from agent_probe.core.schema import (
     AssertionResult,
@@ -23,4 +24,5 @@ __all__ = [
     "Trajectory",
     "TrajectoryDiff",
     "TrajectoryStep",
+    "diff_trajectories",
 ]
