@@ -48,10 +48,25 @@ def _classify_step_pair(
     return state_match, tool_match, args_match, "MATCH"
 
 
+def _resolve_fork_step_id(baseline: Trajectory, candidate: Trajectory) -> int | None:
+    """Return the candidate's fork point when it was replayed from this baseline."""
+    if candidate.fork_step_id is None:
+        return None
+    if candidate.parent_trace_id is not None and candidate.parent_trace_id != baseline.trace_id:
+        return None
+    return candidate.fork_step_id
+
+
 def diff_trajectories(baseline: Trajectory, candidate: Trajectory) -> TrajectoryDiff:
-    """Compare baseline and candidate trajectories step-by-step and compute deltas."""
+    """Compare baseline and candidate trajectories step-by-step and compute deltas.
+
+    When ``candidate`` is a fork replay of ``baseline`` (``candidate.fork_step_id`` set and
+    ``parent_trace_id`` matching), the fork point is surfaced as ``fork_step_id`` and each
+    step comparison carries ``is_fork_point`` / ``is_replayed`` flags.
+    """
     max_len = max(len(baseline.steps), len(candidate.steps))
     divergence_step_id: int | None = None
+    fork_step_id = _resolve_fork_step_id(baseline, candidate)
     step_comparisons: list[dict[str, Any]] = []
 
     for idx in range(max_len):
@@ -84,6 +99,12 @@ def diff_trajectories(baseline: Trajectory, candidate: Trajectory) -> Trajectory
                 "is_first_divergence": is_first_divergence,
                 "token_delta": c_tokens - b_tokens,
                 "latency_delta_ms": round(c_latency - b_latency, 6),
+                "is_fork_point": fork_step_id is not None and step_id == fork_step_id,
+                "is_replayed": bool(
+                    c_step is not None
+                    and c_step.observation is not None
+                    and c_step.observation.is_replayed
+                ),
                 "baseline": _step_summary(b_step),
                 "candidate": _step_summary(c_step),
             }
@@ -97,4 +118,5 @@ def diff_trajectories(baseline: Trajectory, candidate: Trajectory) -> Trajectory
         token_delta=candidate.total_tokens - baseline.total_tokens,
         latency_delta_ms=round(candidate.total_latency_ms - baseline.total_latency_ms, 6),
         step_comparisons=step_comparisons,
+        fork_step_id=fork_step_id,
     )

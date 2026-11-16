@@ -7,6 +7,7 @@ from agent_probe.sandbox.mocker import (
     SandboxViolationError,
     ToolSandbox,
 )
+from agent_probe.sandbox.replay import ReplayDivergenceError, ReplayEngine, ReplayResult
 from agent_probe.sandbox.tracer import (
     InterceptResult,
     ToolInterceptor,
@@ -19,6 +20,9 @@ from agent_probe.sandbox.tracer import (
 __all__ = [
     "InterceptResult",
     "MockRule",
+    "ReplayDivergenceError",
+    "ReplayEngine",
+    "ReplayResult",
     "SandboxConfigError",
     "SandboxHit",
     "SandboxViolationError",

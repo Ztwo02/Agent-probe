@@ -130,3 +130,4 @@ class TrajectoryDiff(BaseModel):
     token_delta: int
     latency_delta_ms: float
     step_comparisons: list[dict[str, Any]]
+    fork_step_id: int | None = None
