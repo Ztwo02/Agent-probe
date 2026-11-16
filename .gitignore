@@ -18,6 +18,7 @@ htmlcov/
 
 # 本地生成的临时评测报告（注意：examples/ 下的数据集需要保留）
 probe_demo_report.html
+probe_harness_report.html
 reports/
 *.eval.html
 public/

@@ -92,11 +92,15 @@ def render_html_report(
                 and c_step.observation.is_error
             )
             has_issue = bool(item["is_diverged"] or is_cand_failed or c_error)
+            is_fork_point = bool(item.get("is_fork_point", False))
             timeline_rows.append(
                 {
                     "status": item["status"],
                     "is_diverged": item["is_diverged"],
                     "is_first_divergence": item["is_first_divergence"],
+                    "is_fork_point": is_fork_point,
+                    "is_highlight_point": bool(is_fork_point or item["is_first_divergence"]),
+                    "step_id": item["step_id"],
                     "token_delta": item["token_delta"],
                     "is_candidate_failed": is_cand_failed,
                     "is_loop_step": is_loop,
@@ -128,6 +132,15 @@ def render_html_report(
             "passed_count": passed_count,
             "token_change_pct": token_change_pct,
             "timeline_rows": timeline_rows,
+            "fork_step_id": diff.fork_step_id,
+            "replayed_count": sum(
+                1
+                for s in candidate.steps
+                if s.observation is not None and s.observation.is_replayed
+            ),
+            "mocked_count": sum(
+                1 for s in candidate.steps if s.observation is not None and s.observation.is_mocked
+            ),
             "single_trace": None,
             "single_rows": [],
         }
@@ -144,6 +157,10 @@ def render_html_report(
                     "is_failed": is_failed,
                     "is_loop_step": is_loop,
                     "has_issue": bool(is_failed or is_err),
+                    "is_fork_point": (
+                        single_trace.fork_step_id is not None
+                        and step.step_id == single_trace.fork_step_id
+                    ),
                 }
             )
         passed_count = (
@@ -162,6 +179,9 @@ def render_html_report(
             "passed_count": passed_count,
             "token_change_pct": 0.0,
             "timeline_rows": [],
+            "fork_step_id": single_trace.fork_step_id,
+            "replayed_count": 0,
+            "mocked_count": 0,
             "single_trace": single_trace,
             "single_rows": single_rows,
         }

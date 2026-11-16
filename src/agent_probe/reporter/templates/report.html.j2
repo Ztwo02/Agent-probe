@@ -114,6 +114,59 @@
       border: 1px solid rgba(59, 130, 246, 0.35);
     }
 
+    .badge-mocked {
+      background: rgba(139, 92, 246, 0.18);
+      color: #c4b5fd;
+      border: 1px solid rgba(139, 92, 246, 0.6);
+    }
+
+    .badge-replayed {
+      background: rgba(20, 184, 166, 0.14);
+      color: #5eead4;
+      border: 1px solid rgba(20, 184, 166, 0.5);
+    }
+
+    .badge-fork {
+      background: rgba(250, 204, 21, 0.16);
+      color: #fde047;
+      border: 1px solid rgba(250, 204, 21, 0.55);
+    }
+
+    .step-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .timeline-row.fork-point {
+      position: relative;
+      padding-left: 14px;
+      border-left: 4px solid #facc15;
+      border-radius: 4px;
+    }
+
+    .fork-banner {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 8px 14px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, rgba(250, 204, 21, 0.22), rgba(250, 204, 21, 0.02));
+      border: 1px solid rgba(250, 204, 21, 0.55);
+      color: #fde047;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+    }
+
+    .fork-banner .fork-detail {
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: normal;
+    }
+
     .metrics-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -380,6 +433,20 @@
   </style>
 </head>
 <body>
+  {% macro obs_badges(obs) -%}
+    {% if obs and obs.is_mocked %}<span class="badge badge-mocked" title="Observation served by ToolSandbox">[MOCKED 🛡️]</span>{% endif %}
+    {% if obs and obs.is_replayed %}<span class="badge badge-replayed" title="Observation replayed from baseline history">[REPLAYED ⏪]</span>{% endif %}
+  {%- endmacro %}
+  {% macro fork_banner(step_id, is_fork, is_divergence) -%}
+    <div class="fork-banner">
+      <span>[FORK / DIVERGENCE POINT ⚡]</span>
+      <span class="fork-detail">
+        Step {{ step_id }}
+        {% if is_fork %}&bull; fork replay starts here (history unlocked){% endif %}
+        {% if is_divergence %}&bull; first state / tool divergence vs baseline{% endif %}
+      </span>
+    </div>
+  {%- endmacro %}
   <div class="container">
     <header class="header">
       <div>
@@ -460,6 +527,16 @@
             {% endif %}
           </div>
         </div>
+
+        {% if fork_step_id is not none %}
+          <div class="metric-card">
+            <div class="metric-label">Fork Replay Point</div>
+            <div class="metric-value">Step {{ fork_step_id }}</div>
+            <div class="metric-sub">
+              {{ replayed_count }} replayed &bull; {{ mocked_count }} mocked candidate steps
+            </div>
+          </div>
+        {% endif %}
       {% else %}
         <div class="metric-card">
           <div class="metric-label">Total Steps</div>
@@ -554,22 +631,31 @@
             <div>
               <strong>Candidate:</strong> {{ candidate.trace_id }}
               <span style="color:var(--text-muted)">({{ candidate.agent_version }})</span>
+              {% if candidate.fork_step_id is not none %}
+                <span class="badge badge-fork">forked from {{ candidate.parent_trace_id or baseline.trace_id }} @ step {{ candidate.fork_step_id }}</span>
+              {% endif %}
             </div>
             <span class="badge {% if candidate.status == 'SUCCESS' %}badge-pass{% else %}badge-fail{% endif %}">{{ candidate.status }}</span>
           </div>
         </div>
 
         {% for row in timeline_rows %}
-          <div class="timeline-row" data-has-issue="{{ 'true' if row.has_issue else 'false' }}">
+          <div class="timeline-row {% if row.is_highlight_point %}fork-point{% endif %}" data-has-issue="{{ 'true' if row.has_issue or row.is_highlight_point else 'false' }}">
+            {% if row.is_highlight_point %}
+              {{ fork_banner(row.step_id, row.is_fork_point, row.is_first_divergence) }}
+            {% endif %}
             {% if row.baseline %}
               <div class="step-card">
                 <div class="step-top">
                   <span class="step-id">Step {{ row.baseline.step_id }} &bull; {{ row.baseline.state }}</span>
-                  {% if row.baseline.tool_name %}
-                    <span class="badge badge-info">{{ row.baseline.tool_name }}</span>
-                  {% else %}
-                    <span class="badge badge-pass">NO TOOL</span>
-                  {% endif %}
+                  <div class="step-badges">
+                    {% if row.baseline.tool_name %}
+                      <span class="badge badge-info">{{ row.baseline.tool_name }}</span>
+                    {% else %}
+                      <span class="badge badge-pass">NO TOOL</span>
+                    {% endif %}
+                    {{ obs_badges(row.baseline.observation) }}
+                  </div>
                 </div>
                 <div class="step-meta">
                   <span>tokens: {{ row.baseline.tokens.total_tokens }}</span>
@@ -623,6 +709,10 @@
                     {% elif row.is_candidate_failed %}
                       <span class="badge badge-fail">ASSERTION FAIL</span>
                     {% endif %}
+                    {% if row.is_fork_point %}
+                      <span class="badge badge-fork">FORK POINT ⚡</span>
+                    {% endif %}
+                    {{ obs_badges(row.candidate.observation) }}
                   </div>
                 </div>
                 <div class="step-meta">
@@ -658,7 +748,10 @@
         {% endfor %}
       {% else %}
         {% for item in single_rows %}
-          <div class="timeline-row single-col" data-has-issue="{{ 'true' if item.has_issue else 'false' }}">
+          <div class="timeline-row single-col {% if item.is_fork_point %}fork-point{% endif %}" data-has-issue="{{ 'true' if item.has_issue else 'false' }}">
+            {% if item.is_fork_point %}
+              {{ fork_banner(item.step.step_id, true, false) }}
+            {% endif %}
             <div class="step-card {% if item.has_issue %}diverged{% endif %}">
               <div class="step-top">
                 <span class="step-id">Step {{ item.step.step_id }} &bull; {{ item.step.state }}</span>
@@ -674,6 +767,7 @@
                   {% if item.step.observation and item.step.observation.is_error %}
                     <span class="badge badge-fail">TOOL ERROR</span>
                   {% endif %}
+                  {{ obs_badges(item.step.observation) }}
                 </div>
               </div>
               <div class="step-meta">

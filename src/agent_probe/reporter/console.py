@@ -13,6 +13,21 @@ def _format_status_badge(passed: bool) -> str:
     return "[bold green]PASS[/bold green]" if passed else "[bold red]FAIL[/bold red]"
 
 
+def _observation_markers(step_summary: dict | None) -> str:
+    """Rich markup suffix flagging sandbox-mocked / history-replayed observations."""
+    if step_summary is None or not step_summary.get("observation"):
+        return ""
+    obs = step_summary["observation"]
+    markers = ""
+    if obs.get("is_mocked"):
+        markers += " [magenta][MOCKED][/magenta]"
+    if obs.get("is_replayed"):
+        markers += " [cyan][REPLAYED][/cyan]"
+    if obs.get("is_error"):
+        markers += f" [red]({obs.get('error_type') or 'ERROR'})[/red]"
+    return markers
+
+
 def _collect_failed_steps(report: EvalReport | None) -> set[int]:
     if report is None:
         return set()
@@ -116,6 +131,23 @@ def render_diff_report(
         f"[bold]First Divergence:[/bold] {divergence_text}",
     ]
 
+    if diff.fork_step_id is not None:
+        replayed = [
+            s.step_id
+            for s in candidate.steps
+            if s.observation is not None and s.observation.is_replayed
+        ]
+        mocked = [
+            s.step_id
+            for s in candidate.steps
+            if s.observation is not None and s.observation.is_mocked
+        ]
+        lines.append(
+            f"[bold]Fork Replay:[/bold] [bold cyan]Step {diff.fork_step_id}[/bold cyan] "
+            f"(parent={candidate.parent_trace_id or baseline.trace_id})    "
+            f"replayed steps={replayed or '-'}    mocked steps={mocked or '-'}"
+        )
+
     if baseline_report is not None and candidate_report is not None:
         base_badge = _format_status_badge(baseline_report.overall_passed)
         cand_badge = _format_status_badge(candidate_report.overall_passed)
@@ -175,6 +207,11 @@ def render_diff_report(
 
         if is_failed:
             status_badge = f"{status_badge} [bold red][GUARD FAIL][/bold red]"
+        if row.get("is_fork_point"):
+            status_badge = f"{status_badge} [bold yellow][FORK POINT][/bold yellow]"
+
+        b_label += _observation_markers(b)
+        c_label += _observation_markers(c)
 
         diff_table.add_row(
             str(row["step_id"]),
