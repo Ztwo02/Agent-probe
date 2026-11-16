@@ -1,5 +1,6 @@
 """Core domain layer: schemas, evaluation engine, and trajectory differ."""
 
+from agent_probe.core.engine import EvaluationEngine, SuiteConfigError
 from agent_probe.core.schema import (
     AssertionResult,
     EvalReport,
@@ -14,7 +15,9 @@ from agent_probe.core.schema import (
 __all__ = [
     "AssertionResult",
     "EvalReport",
+    "EvaluationEngine",
     "Observation",
+    "SuiteConfigError",
     "TokenUsage",
     "ToolCall",
     "Trajectory",
