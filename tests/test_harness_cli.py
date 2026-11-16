@@ -59,10 +59,17 @@ def test_cli_harness_demo_generates_badged_html(tmp_path: Path, monkeypatch) -> 
     assert "[REPLAYED ⏪]" in html
     assert "[FORK / DIVERGENCE POINT ⚡]" in html
     assert "Fork Replay Point" in html
+    assert "TimeoutError" in html
+    assert "Baseline Final Output" in html
+    assert "Candidate Final Output" in html
+    assert "btn-filter-mocked" in html
+    assert "btn-filter-replayed" in html
+    assert "btn-filter-fork" in html
     assert "harness-v1-baseline" in html
     assert "harness-v2-fork-replay" in html
     assert "issue_apology_coupon" in html
     assert "<script src=" not in html
+    assert "#0b1020" not in html  # dark neon background removed in favor of clean light theme
 
 
 def test_cli_harness_demo_custom_output(tmp_path: Path) -> None:
@@ -109,6 +116,25 @@ def test_cli_replay_command_with_file_agent(tmp_path: Path) -> None:
     assert candidate["parent_trace_id"] == "harness-v1-baseline"
     assert candidate["fork_step_id"] == 2
     assert candidate["status"] == "SUCCESS"
+
+    # Single-trace HTML report via `agent-probe run` also surfaces Phase 2 markers.
+    suite_path = tmp_path / "suite.yaml"
+    suite_path.write_text(
+        "suite_name: s\nrules:\n  - type: max_steps\n    params:\n      max_steps: 5\n",
+        encoding="utf-8",
+    )
+    single_html = tmp_path / "single.html"
+    run_res = runner.invoke(
+        app,
+        ["run", str(saved), "--suite", str(suite_path), "--html", str(single_html)],
+    )
+    assert run_res.exit_code == 0, run_res.output
+    single_content = single_html.read_text(encoding="utf-8")
+    assert "Fork Replay Point" in single_content
+    assert "1 replayed" in single_content
+    assert "2 mocked steps" in single_content
+    assert "TimeoutError" in single_content
+    assert "Final Output" in single_content
 
 
 def test_cli_replay_reports_bad_agent_spec() -> None:

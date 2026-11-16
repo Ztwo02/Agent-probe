@@ -6,22 +6,45 @@
   <title>{{ report_title }}</title>
   <style>
     :root {
-      --bg: #0b1020;
-      --surface: #12192e;
-      --surface-alt: #18223d;
-      --border: #273459;
-      --text: #e6ecf8;
-      --text-muted: #93a4c7;
-      --green: #22c55e;
-      --green-bg: rgba(34, 197, 94, 0.14);
-      --red: #ef4444;
-      --red-bg: rgba(239, 68, 68, 0.14);
-      --amber: #f59e0b;
-      --amber-bg: rgba(245, 158, 11, 0.14);
-      --blue: #3b82f6;
-      --blue-bg: rgba(59, 130, 246, 0.14);
+      --bg: #f7f7f8;
+      --surface: #ffffff;
+      --surface-subtle: #fafafa;
+      --code-bg: #f4f4f5;
+      --border: #e4e4e7;
+      --border-strong: #d4d4d8;
+      --text: #18181b;
+      --text-secondary: #3f3f46;
+      --text-muted: #71717a;
+
+      --pass-bg: #ecfdf5;
+      --pass-border: #bbf7d0;
+      --pass-text: #166534;
+
+      --fail-bg: #fef2f2;
+      --fail-border: #fecaca;
+      --fail-text: #991b1b;
+      --fail-accent: #dc2626;
+
+      --warn-bg: #fffbeb;
+      --warn-border: #fde68a;
+      --warn-text: #92400e;
+      --warn-accent: #d97706;
+
+      --info-bg: #f4f4f5;
+      --info-border: #e4e4e7;
+      --info-text: #27272a;
+
+      --mock-bg: #eef2ff;
+      --mock-border: #c7d2fe;
+      --mock-text: #3730a3;
+
+      --replay-bg: #f0f9ff;
+      --replay-border: #bae6fd;
+      --replay-text: #075985;
+
+      --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.04);
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
     * {
@@ -31,14 +54,15 @@
     body {
       margin: 0;
       font-family: var(--sans);
-      background: radial-gradient(circle at top right, #16213e 0%, var(--bg) 55%);
+      background: var(--bg);
       color: var(--text);
-      line-height: 1.5;
-      padding: 28px 20px 64px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      padding: 36px 24px 72px;
     }
 
     .container {
-      max-width: 1320px;
+      max-width: 1280px;
       margin: 0 auto;
     }
 
@@ -49,169 +73,211 @@
       align-items: flex-start;
       gap: 16px;
       margin-bottom: 24px;
-      padding-bottom: 18px;
+      padding-bottom: 20px;
       border-bottom: 1px solid var(--border);
     }
 
     .brand {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
-      font-size: 13px;
+      gap: 8px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--blue);
-      font-weight: 700;
-      margin-bottom: 6px;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .brand-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text);
+      display: inline-block;
     }
 
     h1 {
       margin: 0;
       font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      color: var(--text);
     }
 
     .subtitle {
       margin-top: 6px;
       color: var(--text-muted);
-      font-size: 14px;
+      font-size: 13px;
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.03em;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
       white-space: nowrap;
+      border: 1px solid transparent;
     }
 
     .badge-pass {
-      background: var(--green-bg);
-      color: #4ade80;
-      border: 1px solid rgba(34, 197, 94, 0.35);
+      background: var(--pass-bg);
+      color: var(--pass-text);
+      border-color: var(--pass-border);
     }
 
     .badge-fail {
-      background: var(--red-bg);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.45);
+      background: var(--fail-bg);
+      color: var(--fail-text);
+      border-color: var(--fail-border);
     }
 
     .badge-warn {
-      background: var(--amber-bg);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.4);
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      border-color: var(--warn-border);
     }
 
     .badge-info {
-      background: var(--blue-bg);
-      color: #60a5fa;
-      border: 1px solid rgba(59, 130, 246, 0.35);
+      background: var(--info-bg);
+      color: var(--info-text);
+      border-color: var(--info-border);
     }
 
     .badge-mocked {
-      background: rgba(139, 92, 246, 0.18);
-      color: #c4b5fd;
-      border: 1px solid rgba(139, 92, 246, 0.6);
+      background: var(--mock-bg);
+      color: var(--mock-text);
+      border-color: var(--mock-border);
     }
 
     .badge-replayed {
-      background: rgba(20, 184, 166, 0.14);
-      color: #5eead4;
-      border: 1px solid rgba(20, 184, 166, 0.5);
+      background: var(--replay-bg);
+      color: var(--replay-text);
+      border-color: var(--replay-border);
     }
 
     .badge-fork {
-      background: rgba(250, 204, 21, 0.16);
-      color: #fde047;
-      border: 1px solid rgba(250, 204, 21, 0.55);
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      border-color: var(--warn-border);
     }
 
     .step-badges {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
-    }
-
-    .timeline-row.fork-point {
-      position: relative;
-      padding-left: 14px;
-      border-left: 4px solid #facc15;
-      border-radius: 4px;
-    }
-
-    .fork-banner {
-      grid-column: 1 / -1;
-      display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      padding: 8px 14px;
-      border-radius: 8px;
-      background: linear-gradient(90deg, rgba(250, 204, 21, 0.22), rgba(250, 204, 21, 0.02));
-      border: 1px solid rgba(250, 204, 21, 0.55);
-      color: #fde047;
-      font-weight: 800;
-      font-size: 13px;
-      letter-spacing: 0.04em;
     }
 
-    .fork-banner .fork-detail {
-      color: var(--text-muted);
+    .context-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .context-grid.two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .task-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      font-size: 13.5px;
+      color: var(--text-secondary);
+    }
+
+    .task-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
       font-weight: 600;
-      letter-spacing: normal;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .task-content {
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
     .metrics-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
     }
 
     .metric-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
     }
 
     .metric-card.alert {
-      border-color: rgba(239, 68, 68, 0.6);
-      background: linear-gradient(180deg, rgba(239, 68, 68, 0.1), var(--surface));
+      border-color: var(--fail-border);
+      border-top: 2px solid var(--fail-accent);
     }
 
     .metric-label {
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--text-muted);
+      font-weight: 600;
       margin-bottom: 8px;
     }
 
     .metric-value {
-      font-size: 26px;
-      font-weight: 700;
+      font-size: 24px;
+      font-weight: 650;
       line-height: 1.2;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    .metric-value-muted {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
     }
 
     .metric-sub {
       margin-top: 6px;
-      font-size: 13px;
+      font-size: 12.5px;
       color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
     }
 
     .section {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 20px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
     }
 
     .section-header {
@@ -225,14 +291,16 @@
 
     .section-title {
       margin: 0;
-      font-size: 17px;
-      font-weight: 700;
+      font-size: 15.5px;
+      font-weight: 650;
+      color: var(--text);
+      letter-spacing: -0.01em;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 13.5px;
     }
 
     th, td {
@@ -243,68 +311,86 @@
     }
 
     th {
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       color: var(--text-muted);
       font-weight: 600;
+      background: var(--surface-subtle);
+    }
+
+    tbody tr:hover {
+      background: var(--surface-subtle);
     }
 
     tr:last-child td {
       border-bottom: none;
     }
 
+    code {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--text);
+    }
+
     .toolbar {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
     }
 
     .btn {
-      background: var(--surface-alt);
-      color: var(--text);
+      background: var(--surface);
+      color: var(--text-secondary);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 13px;
-      font-weight: 600;
+      border-radius: 7px;
+      padding: 5px 11px;
+      font-size: 12.5px;
+      font-weight: 500;
       cursor: pointer;
+      transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
     }
 
     .btn:hover {
-      border-color: var(--blue);
+      background: var(--surface-subtle);
+      border-color: var(--border-strong);
+      color: var(--text);
     }
 
     .btn.active {
-      background: var(--blue-bg);
-      border-color: var(--blue);
-      color: #93c5fd;
+      background: var(--text);
+      border-color: var(--text);
+      color: #ffffff;
     }
 
     .diff-columns-header {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 12px;
+      gap: 14px;
+      margin-bottom: 14px;
     }
 
     .lane-banner {
-      background: var(--surface-alt);
+      background: var(--surface-subtle);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
+      border-radius: 8px;
+      padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
+      font-size: 13px;
     }
 
     .timeline-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 14px;
+      gap: 14px;
+      margin-bottom: 12px;
     }
 
     .timeline-row.single-col {
@@ -315,33 +401,65 @@
       display: none;
     }
 
-    .step-card {
-      background: var(--surface-alt);
-      border: 1px solid var(--border);
+    .timeline-row.fork-point {
+      padding: 12px;
+      border: 1px solid var(--warn-border);
+      border-left: 3px solid var(--warn-accent);
+      background: #fffdf7;
       border-radius: 10px;
+    }
+
+    .fork-banner {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 7px 12px;
+      border-radius: 6px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      color: var(--warn-text);
+      font-weight: 650;
+      font-size: 12px;
+      letter-spacing: 0.03em;
+    }
+
+    .fork-banner .fork-detail {
+      color: var(--text-secondary);
+      font-weight: 500;
+      letter-spacing: normal;
+    }
+
+    .step-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
       padding: 14px;
       transition: border-color 0.15s ease;
     }
 
     .step-card.diverged {
-      border-color: rgba(239, 68, 68, 0.78);
-      background: linear-gradient(180deg, rgba(239, 68, 68, 0.12), var(--surface-alt));
-      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.25);
+      border-color: var(--fail-border);
+      border-left: 3px solid var(--fail-accent);
+      background: #fffafa;
     }
 
     .step-card.args-diff {
-      border-color: rgba(245, 158, 11, 0.65);
+      border-color: var(--warn-border);
+      border-left: 3px solid var(--warn-accent);
     }
 
     .step-card.empty-slot {
+      background: var(--surface-subtle);
       border-style: dashed;
-      opacity: 0.55;
+      border-color: var(--border-strong);
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 86px;
+      min-height: 82px;
       color: var(--text-muted);
-      font-size: 13px;
+      font-size: 12.5px;
     }
 
     .step-top {
@@ -354,31 +472,37 @@
     }
 
     .step-id {
-      font-weight: 700;
-      font-size: 14px;
+      font-weight: 600;
+      font-size: 13.5px;
+      color: var(--text);
     }
 
     .step-meta {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       flex-wrap: wrap;
       font-size: 12px;
       color: var(--text-muted);
       margin-bottom: 10px;
       font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
     }
 
     details {
-      border-top: 1px solid rgba(148, 163, 184, 0.18);
+      border-top: 1px solid var(--border);
       padding-top: 8px;
     }
 
     summary {
       cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      color: #93c5fd;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
       user-select: none;
+    }
+
+    summary:hover {
+      color: var(--text);
     }
 
     .detail-block {
@@ -386,7 +510,8 @@
     }
 
     .detail-label {
-      font-size: 11px;
+      font-size: 10.5px;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--text-muted);
@@ -394,37 +519,31 @@
     }
 
     .thought-box {
-      background: rgba(11, 16, 32, 0.65);
+      background: var(--surface-subtle);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
+      border-radius: 6px;
+      padding: 9px 11px;
       font-size: 13px;
+      color: var(--text-secondary);
       white-space: pre-wrap;
     }
 
     pre {
       margin: 0;
-      background: rgba(11, 16, 32, 0.8);
+      background: var(--code-bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
+      border-radius: 6px;
+      padding: 9px 11px;
       font-family: var(--mono);
       font-size: 12px;
+      color: var(--text);
       overflow-x: auto;
       white-space: pre-wrap;
       word-break: break-word;
     }
 
-    .task-box {
-      background: var(--surface-alt);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-
     @media (max-width: 900px) {
+      .context-grid.two-col,
       .diff-columns-header,
       .timeline-row {
         grid-template-columns: 1fr;
@@ -436,6 +555,7 @@
   {% macro obs_badges(obs) -%}
     {% if obs and obs.is_mocked %}<span class="badge badge-mocked" title="Observation served by ToolSandbox">[MOCKED 🛡️]</span>{% endif %}
     {% if obs and obs.is_replayed %}<span class="badge badge-replayed" title="Observation replayed from baseline history">[REPLAYED ⏪]</span>{% endif %}
+    {% if obs and obs.is_error %}<span class="badge badge-fail" title="Tool raised an exception">{{ obs.error_type or 'ERROR' }}</span>{% endif %}
   {%- endmacro %}
   {% macro fork_banner(step_id, is_fork, is_divergence) -%}
     <div class="fork-banner">
@@ -450,13 +570,28 @@
   <div class="container">
     <header class="header">
       <div>
-        <div class="brand">Agent-Probe &bull; White-Box Trajectory Report</div>
+        <div class="brand">
+          <span class="brand-dot"></span>
+          Agent-Probe &bull; White-Box Trajectory Report
+        </div>
         <h1>{{ report_title }}</h1>
         <div class="subtitle">
-          Generated locally &bull; Self-contained offline trace inspection &amp; assertion report
+          Local-first self-contained inspection &amp; assertion report
+          {% if fork_step_id is not none %}
+            &bull; Fork Replay @ Step {{ fork_step_id }}
+          {% endif %}
+          {% if has_mocked_steps %}
+            &bull; Sandbox Mocked
+          {% endif %}
         </div>
       </div>
-      <div>
+      <div class="header-badges">
+        {% if has_mocked_steps %}
+          <span class="badge badge-mocked">[MOCKED 🛡️]</span>
+        {% endif %}
+        {% if has_replayed_steps %}
+          <span class="badge badge-replayed">[REPLAYED ⏪]</span>
+        {% endif %}
         {% if primary_report %}
           {% if primary_report.overall_passed %}
             <span class="badge badge-pass">EVAL PASSED ({{ "%.1f"|format(primary_report.overall_score * 100) }}%)</span>
@@ -473,9 +608,41 @@
       </div>
     </header>
 
-    <div class="task-box">
-      <strong>Task Input:</strong> {{ task_input }}
+    <div class="context-grid">
+      <div class="task-box">
+        <div class="task-label"><span>Task Input</span></div>
+        <div class="task-content">{{ task_input }}</div>
+      </div>
     </div>
+
+    {% if diff and (baseline.final_output is not none or candidate.final_output is not none) %}
+      <div class="context-grid two-col">
+        <div class="task-box">
+          <div class="task-label">
+            <span>Baseline Final Output</span>
+            <span class="badge {% if baseline.status == 'SUCCESS' %}badge-pass{% else %}badge-fail{% endif %}">{{ baseline.status }}</span>
+          </div>
+          <div class="task-content">{{ baseline.final_output if baseline.final_output is not none else '<none>' }}</div>
+        </div>
+        <div class="task-box">
+          <div class="task-label">
+            <span>Candidate Final Output</span>
+            <span class="badge {% if candidate.status == 'SUCCESS' %}badge-pass{% else %}badge-fail{% endif %}">{{ candidate.status }}</span>
+          </div>
+          <div class="task-content">{{ candidate.final_output if candidate.final_output is not none else '<none>' }}</div>
+        </div>
+      </div>
+    {% elif single_trace and single_trace.final_output is not none %}
+      <div class="context-grid">
+        <div class="task-box">
+          <div class="task-label">
+            <span>Final Output</span>
+            <span class="badge {% if single_trace.status == 'SUCCESS' %}badge-pass{% else %}badge-fail{% endif %}">{{ single_trace.status }}</span>
+          </div>
+          <div class="task-content">{{ single_trace.final_output }}</div>
+        </div>
+      </div>
+    {% endif %}
 
     <section class="metrics-grid">
       {% if primary_report %}
@@ -494,13 +661,13 @@
       {% if diff %}
         <div class="metric-card">
           <div class="metric-label">Total Steps Comparison</div>
-          <div class="metric-value">{{ candidate.total_steps }} <span style="font-size:15px;color:var(--text-muted)">vs {{ baseline.total_steps }}</span></div>
+          <div class="metric-value">{{ candidate.total_steps }} <span class="metric-value-muted">vs {{ baseline.total_steps }}</span></div>
           <div class="metric-sub">Step delta: {{ "%+d"|format(diff.step_delta) }}</div>
         </div>
 
         <div class="metric-card {% if diff.token_delta > 0 %}alert{% endif %}">
           <div class="metric-label">Token Consumption &amp; Change</div>
-          <div class="metric-value">{{ candidate.total_tokens }} <span style="font-size:15px;color:var(--text-muted)">vs {{ baseline.total_tokens }}</span></div>
+          <div class="metric-value">{{ candidate.total_tokens }} <span class="metric-value-muted">vs {{ baseline.total_tokens }}</span></div>
           <div class="metric-sub">Delta: {{ "%+d"|format(diff.token_delta) }} ({{ "%+.1f"|format(token_change_pct) }}%)</div>
         </div>
 
@@ -528,12 +695,17 @@
           </div>
         </div>
 
-        {% if fork_step_id is not none %}
+        {% if fork_step_id is not none or has_mocked_steps or has_replayed_steps %}
           <div class="metric-card">
-            <div class="metric-label">Fork Replay Point</div>
-            <div class="metric-value">Step {{ fork_step_id }}</div>
+            <div class="metric-label">{% if fork_step_id is not none %}Fork Replay Point{% else %}Sandbox Coverage{% endif %}</div>
+            <div class="metric-value">
+              {% if fork_step_id is not none %}Step {{ fork_step_id }}{% else %}Active{% endif %}
+            </div>
             <div class="metric-sub">
-              {{ replayed_count }} replayed &bull; {{ mocked_count }} mocked candidate steps
+              {{ replayed_count }} replayed &bull; {{ mocked_count }} mocked candidate
+              {% if baseline_mocked_count > 0 %}
+                &bull; {{ baseline_mocked_count }} mocked baseline
+              {% endif %}
             </div>
           </div>
         {% endif %}
@@ -553,6 +725,17 @@
           <div class="metric-value">{{ "%.1f"|format(single_trace.total_latency_ms) }} ms</div>
           <div class="metric-sub">Trace: {{ single_trace.trace_id }}</div>
         </div>
+        {% if fork_step_id is not none or has_mocked_steps or has_replayed_steps %}
+          <div class="metric-card">
+            <div class="metric-label">{% if fork_step_id is not none %}Fork Replay Point{% else %}Sandbox Coverage{% endif %}</div>
+            <div class="metric-value">
+              {% if fork_step_id is not none %}Step {{ fork_step_id }}{% else %}Active{% endif %}
+            </div>
+            <div class="metric-sub">
+              {{ replayed_count }} replayed &bull; {{ mocked_count }} mocked steps
+            </div>
+          </div>
+        {% endif %}
       {% endif %}
     </section>
 
@@ -612,7 +795,16 @@
         </h2>
         <div class="toolbar">
           <button type="button" class="btn active" id="btn-filter-all" onclick="filterRows('all')">All Steps</button>
-          <button type="button" class="btn" id="btn-filter-issues" onclick="filterRows('issues')">Diverged / Failed Only</button>
+          <button type="button" class="btn" id="btn-filter-issues" onclick="filterRows('issues')">Diverged / Failed</button>
+          {% if has_mocked_steps %}
+            <button type="button" class="btn" id="btn-filter-mocked" onclick="filterRows('mocked')">Mocked</button>
+          {% endif %}
+          {% if has_replayed_steps %}
+            <button type="button" class="btn" id="btn-filter-replayed" onclick="filterRows('replayed')">Replayed</button>
+          {% endif %}
+          {% if has_fork_point %}
+            <button type="button" class="btn" id="btn-filter-fork" onclick="filterRows('fork')">Fork Point</button>
+          {% endif %}
           <button type="button" class="btn" onclick="toggleAllDetails(true)">Expand All</button>
           <button type="button" class="btn" onclick="toggleAllDetails(false)">Collapse All</button>
         </div>
@@ -640,7 +832,11 @@
         </div>
 
         {% for row in timeline_rows %}
-          <div class="timeline-row {% if row.is_highlight_point %}fork-point{% endif %}" data-has-issue="{{ 'true' if row.has_issue or row.is_highlight_point else 'false' }}">
+          <div class="timeline-row {% if row.is_highlight_point %}fork-point{% endif %}"
+               data-has-issue="{{ 'true' if row.has_issue or row.is_highlight_point else 'false' }}"
+               data-is-mocked="{{ 'true' if row.is_mocked else 'false' }}"
+               data-is-replayed="{{ 'true' if row.is_replayed else 'false' }}"
+               data-is-fork="{{ 'true' if row.is_fork_point else 'false' }}">
             {% if row.is_highlight_point %}
               {{ fork_banner(row.step_id, row.is_fork_point, row.is_first_divergence) }}
             {% endif %}
@@ -677,7 +873,11 @@
                   {% endif %}
                   {% if row.baseline.observation %}
                     <div class="detail-block">
-                      <div class="detail-label">Observation {% if row.baseline.observation.is_error %}(ERROR){% endif %}{% if row.baseline.observation.is_mocked %} (MOCKED){% endif %}</div>
+                      <div class="detail-label">
+                        Observation
+                        {% if row.baseline.observation.is_error %}({{ row.baseline.observation.error_type or 'ERROR' }}){% endif %}
+                        {% if row.baseline.observation.is_mocked %}(MOCKED){% endif %}
+                      </div>
                       <pre>{{ row.baseline.observation_pretty }}</pre>
                     </div>
                   {% endif %}
@@ -691,7 +891,7 @@
               <div class="step-card {% if row.is_diverged or row.is_candidate_failed %}diverged{% elif row.status == 'ARGS_DIFF' %}args-diff{% endif %}">
                 <div class="step-top">
                   <span class="step-id">Step {{ row.candidate.step_id }} &bull; {{ row.candidate.state }}</span>
-                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <div class="step-badges">
                     {% if row.candidate.tool_name %}
                       <span class="badge badge-info">{{ row.candidate.tool_name }}</span>
                     {% endif %}
@@ -735,7 +935,12 @@
                   {% endif %}
                   {% if row.candidate.observation %}
                     <div class="detail-block">
-                      <div class="detail-label">Observation {% if row.candidate.observation.is_error %}(ERROR){% endif %}{% if row.candidate.observation.is_mocked %} (MOCKED){% endif %}</div>
+                      <div class="detail-label">
+                        Observation
+                        {% if row.candidate.observation.is_error %}({{ row.candidate.observation.error_type or 'ERROR' }}){% endif %}
+                        {% if row.candidate.observation.is_mocked %}(MOCKED){% endif %}
+                        {% if row.candidate.observation.is_replayed %}(REPLAYED){% endif %}
+                      </div>
                       <pre>{{ row.candidate.observation_pretty }}</pre>
                     </div>
                   {% endif %}
@@ -748,14 +953,18 @@
         {% endfor %}
       {% else %}
         {% for item in single_rows %}
-          <div class="timeline-row single-col {% if item.is_fork_point %}fork-point{% endif %}" data-has-issue="{{ 'true' if item.has_issue else 'false' }}">
+          <div class="timeline-row single-col {% if item.is_fork_point %}fork-point{% endif %}"
+               data-has-issue="{{ 'true' if item.has_issue or item.is_fork_point else 'false' }}"
+               data-is-mocked="{{ 'true' if item.is_mocked else 'false' }}"
+               data-is-replayed="{{ 'true' if item.is_replayed else 'false' }}"
+               data-is-fork="{{ 'true' if item.is_fork_point else 'false' }}">
             {% if item.is_fork_point %}
               {{ fork_banner(item.step.step_id, true, false) }}
             {% endif %}
             <div class="step-card {% if item.has_issue %}diverged{% endif %}">
               <div class="step-top">
                 <span class="step-id">Step {{ item.step.step_id }} &bull; {{ item.step.state }}</span>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <div class="step-badges">
                   {% if item.step.tool_name %}
                     <span class="badge badge-info">{{ item.step.tool_name }}</span>
                   {% endif %}
@@ -764,8 +973,8 @@
                   {% elif item.is_failed %}
                     <span class="badge badge-fail">ASSERTION FAIL</span>
                   {% endif %}
-                  {% if item.step.observation and item.step.observation.is_error %}
-                    <span class="badge badge-fail">TOOL ERROR</span>
+                  {% if item.is_fork_point %}
+                    <span class="badge badge-fork">FORK POINT ⚡</span>
                   {% endif %}
                   {{ obs_badges(item.step.observation) }}
                 </div>
@@ -790,7 +999,12 @@
                 {% endif %}
                 {% if item.step.observation %}
                   <div class="detail-block">
-                    <div class="detail-label">Observation</div>
+                    <div class="detail-label">
+                      Observation
+                      {% if item.step.observation.is_error %}({{ item.step.observation.error_type or 'ERROR' }}){% endif %}
+                      {% if item.step.observation.is_mocked %}(MOCKED){% endif %}
+                      {% if item.step.observation.is_replayed %}(REPLAYED){% endif %}
+                    </div>
                     <pre>{{ item.step.observation_pretty }}</pre>
                   </div>
                 {% endif %}
@@ -810,14 +1024,33 @@
     }
 
     function filterRows(mode) {
-      const allBtn = document.getElementById('btn-filter-all');
-      const issuesBtn = document.getElementById('btn-filter-issues');
-      if (allBtn && issuesBtn) {
-        allBtn.classList.toggle('active', mode === 'all');
-        issuesBtn.classList.toggle('active', mode === 'issues');
-      }
+      var buttons = {
+        all: document.getElementById('btn-filter-all'),
+        issues: document.getElementById('btn-filter-issues'),
+        mocked: document.getElementById('btn-filter-mocked'),
+        replayed: document.getElementById('btn-filter-replayed'),
+        fork: document.getElementById('btn-filter-fork')
+      };
+      Object.keys(buttons).forEach(function (key) {
+        if (buttons[key]) {
+          buttons[key].classList.toggle('active', key === mode);
+        }
+      });
+
+      var attrMap = {
+        issues: 'hasIssue',
+        mocked: 'isMocked',
+        replayed: 'isReplayed',
+        fork: 'isFork'
+      };
+
       document.querySelectorAll('.timeline-row').forEach(function (row) {
-        if (mode === 'issues' && row.dataset.hasIssue !== 'true') {
+        if (mode === 'all') {
+          row.classList.remove('hidden');
+          return;
+        }
+        var attr = attrMap[mode];
+        if (attr && row.dataset[attr] !== 'true') {
           row.classList.add('hidden');
         } else {
           row.classList.remove('hidden');

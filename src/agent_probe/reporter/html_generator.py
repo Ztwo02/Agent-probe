@@ -51,6 +51,14 @@ def _extract_failure_sets(report: EvalReport | None) -> tuple[set[int], set[int]
     return failed_steps, loop_steps
 
 
+def _count_observation_flags(trace: Trajectory) -> tuple[int, int]:
+    replayed = sum(
+        1 for s in trace.steps if s.observation is not None and s.observation.is_replayed
+    )
+    mocked = sum(1 for s in trace.steps if s.observation is not None and s.observation.is_mocked)
+    return replayed, mocked
+
+
 def render_html_report(
     *,
     baseline: Trajectory | None = None,
@@ -78,6 +86,8 @@ def render_html_report(
         base_by_idx = {idx: step for idx, step in enumerate(baseline.steps)}
         cand_by_idx = {idx: step for idx, step in enumerate(candidate.steps)}
         timeline_rows: list[dict[str, Any]] = []
+        any_mocked = False
+        any_replayed = False
 
         for item in diff.step_comparisons:
             idx = item["index"]
@@ -91,6 +101,17 @@ def render_html_report(
                 and c_step.observation is not None
                 and c_step.observation.is_error
             )
+            row_mocked = bool(
+                (b_step and b_step.observation and b_step.observation.is_mocked)
+                or (c_step and c_step.observation and c_step.observation.is_mocked)
+            )
+            row_replayed = bool(
+                (b_step and b_step.observation and b_step.observation.is_replayed)
+                or (c_step and c_step.observation and c_step.observation.is_replayed)
+            )
+            any_mocked = any_mocked or row_mocked
+            any_replayed = any_replayed or row_replayed
+
             has_issue = bool(item["is_diverged"] or is_cand_failed or c_error)
             is_fork_point = bool(item.get("is_fork_point", False))
             timeline_rows.append(
@@ -100,6 +121,8 @@ def render_html_report(
                     "is_first_divergence": item["is_first_divergence"],
                     "is_fork_point": is_fork_point,
                     "is_highlight_point": bool(is_fork_point or item["is_first_divergence"]),
+                    "is_mocked": row_mocked,
+                    "is_replayed": row_replayed,
                     "step_id": item["step_id"],
                     "token_delta": item["token_delta"],
                     "is_candidate_failed": is_cand_failed,
@@ -120,6 +143,8 @@ def render_html_report(
             if primary_report is not None
             else 0
         )
+        replayed_count, mocked_count = _count_observation_flags(candidate)
+        _, baseline_mocked_count = _count_observation_flags(baseline)
         default_title = f"Trajectory Diff: {baseline.trace_id} vs {candidate.trace_id}"
         context = {
             "report_title": title or default_title,
@@ -133,14 +158,12 @@ def render_html_report(
             "token_change_pct": token_change_pct,
             "timeline_rows": timeline_rows,
             "fork_step_id": diff.fork_step_id,
-            "replayed_count": sum(
-                1
-                for s in candidate.steps
-                if s.observation is not None and s.observation.is_replayed
-            ),
-            "mocked_count": sum(
-                1 for s in candidate.steps if s.observation is not None and s.observation.is_mocked
-            ),
+            "replayed_count": replayed_count,
+            "mocked_count": mocked_count,
+            "baseline_mocked_count": baseline_mocked_count,
+            "has_mocked_steps": any_mocked,
+            "has_replayed_steps": any_replayed,
+            "has_fork_point": diff.fork_step_id is not None,
             "single_trace": None,
             "single_rows": [],
         }
@@ -151,16 +174,21 @@ def render_html_report(
             is_failed = step.step_id in failed_steps
             is_loop = step.step_id in loop_steps
             is_err = step.observation is not None and step.observation.is_error
+            is_mocked = step.observation is not None and step.observation.is_mocked
+            is_replayed = step.observation is not None and step.observation.is_replayed
+            is_fork_point = (
+                single_trace.fork_step_id is not None
+                and step.step_id == single_trace.fork_step_id
+            )
             single_rows.append(
                 {
                     "step": _format_step_payload(step),
                     "is_failed": is_failed,
                     "is_loop_step": is_loop,
                     "has_issue": bool(is_failed or is_err),
-                    "is_fork_point": (
-                        single_trace.fork_step_id is not None
-                        and step.step_id == single_trace.fork_step_id
-                    ),
+                    "is_mocked": is_mocked,
+                    "is_replayed": is_replayed,
+                    "is_fork_point": is_fork_point,
                 }
             )
         passed_count = (
@@ -168,6 +196,7 @@ def render_html_report(
             if single_report is not None
             else 0
         )
+        replayed_count, mocked_count = _count_observation_flags(single_trace)
         context = {
             "report_title": title or f"Trajectory Evaluation: {single_trace.trace_id}",
             "task_input": single_trace.task_input,
@@ -180,8 +209,12 @@ def render_html_report(
             "token_change_pct": 0.0,
             "timeline_rows": [],
             "fork_step_id": single_trace.fork_step_id,
-            "replayed_count": 0,
-            "mocked_count": 0,
+            "replayed_count": replayed_count,
+            "mocked_count": mocked_count,
+            "baseline_mocked_count": 0,
+            "has_mocked_steps": mocked_count > 0,
+            "has_replayed_steps": replayed_count > 0,
+            "has_fork_point": single_trace.fork_step_id is not None,
             "single_trace": single_trace,
             "single_rows": single_rows,
         }
