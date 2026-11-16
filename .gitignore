@@ -33,3 +33,9 @@ public/
 .idea/
 .antigravity/
 .DS_Store
+
+# 本地实施计划与流程规范文档（仅保留在本地，不纳入 Git 仓库）
+*_implementation_plan.md
+github_workflow_specifications.md
+plan.md
+plan_phase*.md
