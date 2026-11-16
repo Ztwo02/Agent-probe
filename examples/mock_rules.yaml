@@ -1,0 +1,57 @@
+# Agent-Probe ToolSandbox rules: deterministic tool stubs & fault injection.
+#
+# Resolution order per tool call:
+#   1. Specific rules (non-empty match_args) whose pairs are all present in the call
+#      arguments (defaults included). The most specific rule (most keys) wins.
+#   2. The first default rule (no match_args) for the tool acts as the "*" fallback.
+#   3. Otherwise the real tool runs (or is blocked when `strict: true`).
+#
+# Load with:  ToolSandbox.from_yaml("examples/mock_rules.yaml")
+
+strict: false
+
+rules:
+  # --- query_logistics: normal deterministic response for a known order -----------------
+  - tool_name: query_logistics
+    match_args:
+      order_id: ORD-20261116-8891
+    return_value:
+      order_id: ORD-20261116-8891
+      carrier: SF-Express
+      status: CARRIER_SYNC_PENDING
+      last_node: "Shenzhen Sorting Center"
+      delay_hours: null
+    simulated_latency_ms: 120.0
+
+  # --- query_logistics: fault injection — realtime carrier refresh times out ------------
+  # More specific (2 keys) than the rule above, so it wins when realtime_refresh=true.
+  - tool_name: query_logistics
+    match_args:
+      order_id: ORD-20261116-8891
+      realtime_refresh: true
+    raise_error: TimeoutError
+    error_message: "504 Gateway Timeout from carrier SF-Express"
+    simulated_latency_ms: 1200.0
+
+  # --- query_logistics: fallback for unknown order numbers ------------------------------
+  - tool_name: query_logistics
+    return_value:
+      error: ORDER_NOT_FOUND
+      message: "No logistics record found for the given order_id."
+    simulated_latency_ms: 80.0
+
+  # --- issue_apology_coupon: degradation tool used by the self-correcting agent ---------
+  - tool_name: issue_apology_coupon
+    return_value:
+      coupon_code: SORRY-20-OFF
+      amount: 20
+      currency: CNY
+      valid_days: 30
+    simulated_latency_ms: 95.0
+
+  # --- send_email: never hit the real SMTP server during evaluation ---------------------
+  - tool_name: send_email
+    return_value:
+      delivered: true
+      message_id: "mock-msg-0001"
+    simulated_latency_ms: 40.0

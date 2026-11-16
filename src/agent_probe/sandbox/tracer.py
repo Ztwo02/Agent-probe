@@ -35,7 +35,7 @@ from contextvars import ContextVar, Token
 from dataclasses import dataclass
 from pathlib import Path
 from types import TracebackType
-from typing import Any, TypeVar, overload
+from typing import Any, Protocol, TypeVar, overload, runtime_checkable
 
 from agent_probe.core.schema import (
     Observation,
@@ -58,6 +58,69 @@ _current_session: ContextVar[TraceSession | None] = ContextVar(
 def get_current_session() -> TraceSession | None:
     """Return the ``TraceSession`` active in the current context, if any."""
     return _current_session.get()
+
+
+# ---------------------------------------------------------------------- interception hooks
+
+
+@dataclass(frozen=True)
+class ToolInvocation:
+    """Description of a single ``@trace_tool`` call handed to interceptors.
+
+    ``arguments`` holds the explicitly passed arguments (as recorded in the trajectory);
+    ``full_arguments`` additionally includes parameter defaults, which is what argument
+    matching rules should usually be evaluated against.
+    """
+
+    tool_name: str
+    arguments: dict[str, Any]
+    full_arguments: dict[str, Any]
+    step_id: int | None
+    session: TraceSession | None
+
+
+@dataclass
+class InterceptResult:
+    """Short-circuit outcome returned by an interceptor instead of running the real tool."""
+
+    output: Any = None
+    error: Exception | None = None
+    latency_ms: float = 0.0
+    is_mocked: bool = False
+    is_replayed: bool = False
+
+
+@runtime_checkable
+class ToolInterceptor(Protocol):
+    """Hook that may answer a tool call before the real function body executes."""
+
+    def intercept(self, invocation: ToolInvocation) -> InterceptResult | None:
+        """Return an ``InterceptResult`` to short-circuit the call, or ``None`` to pass."""
+        ...
+
+
+_active_interceptors: ContextVar[tuple[ToolInterceptor, ...]] = ContextVar(
+    "agent_probe_active_interceptors", default=()
+)
+
+
+def push_interceptor(interceptor: ToolInterceptor) -> Token[tuple[ToolInterceptor, ...]]:
+    """Activate an interceptor in the current context; returns a token for ``pop``."""
+    return _active_interceptors.set((*_active_interceptors.get(), interceptor))
+
+
+def pop_interceptor(token: Token[tuple[ToolInterceptor, ...]]) -> None:
+    """Deactivate the interceptor activated by the matching ``push_interceptor`` call."""
+    _active_interceptors.reset(token)
+
+
+def _resolve_interception(invocation: ToolInvocation) -> InterceptResult | None:
+    """Query active interceptors innermost-first; the first non-``None`` answer wins."""
+    for interceptor in reversed(_active_interceptors.get()):
+        result = interceptor.intercept(invocation)
+        if result is not None:
+            return result
+    return None
 
 
 @dataclass
@@ -278,21 +341,28 @@ class TraceSession:
 
 def _bind_arguments(
     signature: inspect.Signature | None, args: tuple[Any, ...], kwargs: dict[str, Any]
-) -> dict[str, Any]:
-    """Map a call's positional/keyword arguments to a flat ``{param: value}`` dict."""
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Return ``(explicit_arguments, arguments_with_defaults)`` as flat dicts."""
     if signature is None:
         merged: dict[str, Any] = {f"arg{i}": value for i, value in enumerate(args)}
         merged.update(kwargs)
-        return merged
+        return merged, dict(merged)
     try:
         bound = signature.bind(*args, **kwargs)
     except TypeError:
         merged = {f"arg{i}": value for i, value in enumerate(args)}
         merged.update(kwargs)
-        return merged
+        return merged, dict(merged)
 
+    explicit = _flatten_bound(signature, bound.arguments)
+    bound.apply_defaults()
+    full = _flatten_bound(signature, bound.arguments)
+    return explicit, full
+
+
+def _flatten_bound(signature: inspect.Signature, bound_args: Any) -> dict[str, Any]:
     arguments: dict[str, Any] = {}
-    for name, value in bound.arguments.items():
+    for name, value in bound_args.items():
         param = signature.parameters[name]
         if name in {"self", "cls"} and param.kind in {
             inspect.Parameter.POSITIONAL_ONLY,
@@ -310,6 +380,78 @@ def _bind_arguments(
 
 def _error_observation(exc: Exception, **flags: bool) -> Observation:
     return Observation(output=str(exc), is_error=True, error_type=type(exc).__name__, **flags)
+
+
+class _CallContext:
+    """Per-call bookkeeping shared by the sync and async ``@trace_tool`` wrappers."""
+
+    __slots__ = ("session", "tool_name", "state", "arguments", "step_id", "pending", "start")
+
+    def __init__(
+        self,
+        session: TraceSession | None,
+        tool_name: str,
+        state: str,
+        arguments: dict[str, Any],
+    ) -> None:
+        self.session = session
+        self.tool_name = tool_name
+        self.state = state
+        self.arguments = arguments
+        self.step_id: int | None = None
+        self.pending: _PendingThought | None = None
+        if session is not None:
+            self.step_id, self.pending = session._allocate_step()
+        self.start = time.perf_counter()
+
+    def elapsed_ms(self) -> float:
+        return (time.perf_counter() - self.start) * 1000.0
+
+    def record(self, observation: Observation, latency_ms: float) -> None:
+        if self.session is None or self.step_id is None:
+            return
+        self.session._record_tool_step(
+            step_id=self.step_id,
+            pending=self.pending,
+            tool_name=self.tool_name,
+            arguments=self.arguments,
+            observation=observation,
+            latency_ms=latency_ms,
+            state=self.state,
+        )
+
+    def apply_interception(self, result: InterceptResult) -> Any:
+        """Record an intercepted outcome and return its output (or raise its error)."""
+        flags = {"is_mocked": result.is_mocked, "is_replayed": result.is_replayed}
+        if result.error is not None:
+            self.record(_error_observation(result.error, **flags), result.latency_ms)
+            raise result.error
+        self.record(Observation(output=result.output, **flags), result.latency_ms)
+        return result.output
+
+
+def _prepare_call(
+    tool_name: str,
+    state: str,
+    signature: inspect.Signature | None,
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+) -> tuple[_CallContext | None, InterceptResult | None]:
+    """Build the call context and consult interceptors; ``(None, None)`` means passthrough."""
+    session = _current_session.get()
+    if session is None and not _active_interceptors.get():
+        return None, None
+
+    arguments, full_arguments = _bind_arguments(signature, args, kwargs)
+    ctx = _CallContext(session, tool_name, state, arguments)
+    invocation = ToolInvocation(
+        tool_name=tool_name,
+        arguments=arguments,
+        full_arguments=full_arguments,
+        step_id=ctx.step_id,
+        session=session,
+    )
+    return ctx, _resolve_interception(invocation)
 
 
 @overload
@@ -331,7 +473,8 @@ def trace_tool(
     """Decorate a sync or async tool so its calls are recorded into the active session.
 
     Can be used bare (``@trace_tool``) or with options (``@trace_tool(name="search")``).
-    Outside of an active ``TraceSession`` the wrapped function runs untouched.
+    Outside of an active ``TraceSession`` (and without any active ``ToolSandbox`` /
+    ``ReplayEngine`` interceptor) the wrapped function runs untouched.
     """
 
     def decorator(fn: F) -> F:
@@ -345,35 +488,17 @@ def trace_tool(
 
             @functools.wraps(fn)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
-                session = _current_session.get()
-                if session is None:
+                ctx, intercepted = _prepare_call(tool_name, state, signature, args, kwargs)
+                if ctx is None:
                     return await fn(*args, **kwargs)
-
-                arguments = _bind_arguments(signature, args, kwargs)
-                step_id, pending = session._allocate_step()
-                start = time.perf_counter()
+                if intercepted is not None:
+                    return ctx.apply_interception(intercepted)
                 try:
                     result = await fn(*args, **kwargs)
                 except Exception as exc:
-                    session._record_tool_step(
-                        step_id=step_id,
-                        pending=pending,
-                        tool_name=tool_name,
-                        arguments=arguments,
-                        observation=_error_observation(exc),
-                        latency_ms=(time.perf_counter() - start) * 1000.0,
-                        state=state,
-                    )
+                    ctx.record(_error_observation(exc), ctx.elapsed_ms())
                     raise
-                session._record_tool_step(
-                    step_id=step_id,
-                    pending=pending,
-                    tool_name=tool_name,
-                    arguments=arguments,
-                    observation=Observation(output=result),
-                    latency_ms=(time.perf_counter() - start) * 1000.0,
-                    state=state,
-                )
+                ctx.record(Observation(output=result), ctx.elapsed_ms())
                 return result
 
             async_wrapper.__agent_probe_tool_name__ = tool_name  # type: ignore[attr-defined]
@@ -381,35 +506,17 @@ def trace_tool(
 
         @functools.wraps(fn)
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
-            session = _current_session.get()
-            if session is None:
+            ctx, intercepted = _prepare_call(tool_name, state, signature, args, kwargs)
+            if ctx is None:
                 return fn(*args, **kwargs)
-
-            arguments = _bind_arguments(signature, args, kwargs)
-            step_id, pending = session._allocate_step()
-            start = time.perf_counter()
+            if intercepted is not None:
+                return ctx.apply_interception(intercepted)
             try:
                 result = fn(*args, **kwargs)
             except Exception as exc:
-                session._record_tool_step(
-                    step_id=step_id,
-                    pending=pending,
-                    tool_name=tool_name,
-                    arguments=arguments,
-                    observation=_error_observation(exc),
-                    latency_ms=(time.perf_counter() - start) * 1000.0,
-                    state=state,
-                )
+                ctx.record(_error_observation(exc), ctx.elapsed_ms())
                 raise
-            session._record_tool_step(
-                step_id=step_id,
-                pending=pending,
-                tool_name=tool_name,
-                arguments=arguments,
-                observation=Observation(output=result),
-                latency_ms=(time.perf_counter() - start) * 1000.0,
-                state=state,
-            )
+            ctx.record(Observation(output=result), ctx.elapsed_ms())
             return result
 
         sync_wrapper.__agent_probe_tool_name__ = tool_name  # type: ignore[attr-defined]
