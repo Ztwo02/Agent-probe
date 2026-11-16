@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ report_title }}</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --surface: #12192e;
+      --surface-alt: #18223d;
+      --border: #273459;
+      --text: #e6ecf8;
+      --text-muted: #93a4c7;
+      --green: #22c55e;
+      --green-bg: rgba(34, 197, 94, 0.14);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.14);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.14);
+      --blue: #3b82f6;
+      --blue-bg: rgba(59, 130, 246, 0.14);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: radial-gradient(circle at top right, #16213e 0%, var(--bg) 55%);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 28px 20px 64px;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--blue);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .badge-pass {
+      background: var(--green-bg);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+    }
+
+    .badge-fail {
+      background: var(--red-bg);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+    }
+
+    .badge-warn {
+      background: var(--amber-bg);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .badge-info {
+      background: var(--blue-bg);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+
+    .metric-card.alert {
+      border-color: rgba(239, 68, 68, 0.6);
+      background: linear-gradient(180deg, rgba(239, 68, 68, 0.1), var(--surface));
+    }
+
+    .metric-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .metric-sub {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn {
+      background: var(--surface-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      border-color: var(--blue);
+    }
+
+    .btn.active {
+      background: var(--blue-bg);
+      border-color: var(--blue);
+      color: #93c5fd;
+    }
+
+    .diff-columns-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .lane-banner {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .timeline-row.single-col {
+      grid-template-columns: 1fr;
+    }
+
+    .timeline-row.hidden {
+      display: none;
+    }
+
+    .step-card {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      transition: border-color 0.15s ease;
+    }
+
+    .step-card.diverged {
+      border-color: rgba(239, 68, 68, 0.78);
+      background: linear-gradient(180deg, rgba(239, 68, 68, 0.12), var(--surface-alt));
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.25);
+    }
+
+    .step-card.args-diff {
+      border-color: rgba(245, 158, 11, 0.65);
+    }
+
+    .step-card.empty-slot {
+      border-style: dashed;
+      opacity: 0.55;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 86px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .step-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .step-id {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .step-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      font-family: var(--mono);
+    }
+
+    details {
+      border-top: 1px solid rgba(148, 163, 184, 0.18);
+      padding-top: 8px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #93c5fd;
+      user-select: none;
+    }
+
+    .detail-block {
+      margin-top: 10px;
+    }
+
+    .detail-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .thought-box {
+      background: rgba(11, 16, 32, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+
+    pre {
+      margin: 0;
+      background: rgba(11, 16, 32, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .task-box {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .diff-columns-header,
+      .timeline-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div>
+        <div class="brand">Agent-Probe &bull; White-Box Trajectory Report</div>
+        <h1>{{ report_title }}</h1>
+        <div class="subtitle">
+          Generated locally &bull; Self-contained offline trace inspection &amp; assertion report
+        </div>
+      </div>
+      <div>
+        {% if primary_report %}
+          {% if primary_report.overall_passed %}
+            <span class="badge badge-pass">EVAL PASSED ({{ "%.1f"|format(primary_report.overall_score * 100) }}%)</span>
+          {% else %}
+            <span class="badge badge-fail">EVAL FAILED ({{ "%.1f"|format(primary_report.overall_score * 100) }}%)</span>
+          {% endif %}
+        {% elif diff %}
+          {% if diff.divergence_step_id is not none %}
+            <span class="badge badge-fail">DIVERGED @ STEP {{ diff.divergence_step_id }}</span>
+          {% else %}
+            <span class="badge badge-pass">TRAJECTORIES ALIGNED</span>
+          {% endif %}
+        {% endif %}
+      </div>
+    </header>
+
+    <div class="task-box">
+      <strong>Task Input:</strong> {{ task_input }}
+    </div>
+
+    <section class="metrics-grid">
+      {% if primary_report %}
+        <div class="metric-card {% if not primary_report.overall_passed %}alert{% endif %}">
+          <div class="metric-label">{% if diff %}Candidate Eval Score{% else %}Evaluation Score{% endif %}</div>
+          <div class="metric-value">{{ "%.1f"|format(primary_report.overall_score * 100) }}%</div>
+          <div class="metric-sub">
+            {{ passed_count }} / {{ primary_report.assertions|length }} assertions passed
+            {% if baseline_report %}
+              &bull; Baseline: {{ "%.1f"|format(baseline_report.overall_score * 100) }}%
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if diff %}
+        <div class="metric-card">
+          <div class="metric-label">Total Steps Comparison</div>
+          <div class="metric-value">{{ candidate.total_steps }} <span style="font-size:15px;color:var(--text-muted)">vs {{ baseline.total_steps }}</span></div>
+          <div class="metric-sub">Step delta: {{ "%+d"|format(diff.step_delta) }}</div>
+        </div>
+
+        <div class="metric-card {% if diff.token_delta > 0 %}alert{% endif %}">
+          <div class="metric-label">Token Consumption &amp; Change</div>
+          <div class="metric-value">{{ candidate.total_tokens }} <span style="font-size:15px;color:var(--text-muted)">vs {{ baseline.total_tokens }}</span></div>
+          <div class="metric-sub">Delta: {{ "%+d"|format(diff.token_delta) }} ({{ "%+.1f"|format(token_change_pct) }}%)</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Latency Comparison</div>
+          <div class="metric-value">{{ "%.1f"|format(candidate.total_latency_ms) }} ms</div>
+          <div class="metric-sub">Baseline: {{ "%.1f"|format(baseline.total_latency_ms) }} ms ({{ "%+.1f"|format(diff.latency_delta_ms) }} ms)</div>
+        </div>
+
+        <div class="metric-card {% if diff.divergence_step_id is not none %}alert{% endif %}">
+          <div class="metric-label">First Divergence Point</div>
+          <div class="metric-value">
+            {% if diff.divergence_step_id is not none %}
+              Step {{ diff.divergence_step_id }}
+            {% else %}
+              None
+            {% endif %}
+          </div>
+          <div class="metric-sub">
+            {% if diff.divergence_step_id is not none %}
+              First state or tool divergence detected
+            {% else %}
+              All states &amp; tool calls aligned
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div class="metric-card">
+          <div class="metric-label">Total Steps</div>
+          <div class="metric-value">{{ single_trace.total_steps }}</div>
+          <div class="metric-sub">Status: {{ single_trace.status }}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Tokens</div>
+          <div class="metric-value">{{ single_trace.total_tokens }}</div>
+          <div class="metric-sub">Agent: {{ single_trace.agent_version }}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Latency</div>
+          <div class="metric-value">{{ "%.1f"|format(single_trace.total_latency_ms) }} ms</div>
+          <div class="metric-sub">Trace: {{ single_trace.trace_id }}</div>
+        </div>
+      {% endif %}
+    </section>
+
+    {% if primary_report %}
+      <section class="section">
+        <div class="section-header">
+          <h2 class="section-title">
+            Assertion Details ({{ primary_report.trace_id }})
+          </h2>
+          {% if baseline_report %}
+            <span class="badge {% if baseline_report.overall_passed %}badge-pass{% else %}badge-fail{% endif %}">
+              Baseline Suite: {{ "PASS" if baseline_report.overall_passed else "FAIL" }} ({{ "%.1f"|format(baseline_report.overall_score * 100) }}%)
+            </span>
+          {% endif %}
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Rule</th>
+              <th>Status</th>
+              <th>Score</th>
+              <th>Failed Steps</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in primary_report.assertions %}
+              <tr>
+                <td><code>{{ item.rule_name }}</code></td>
+                <td>
+                  {% if item.passed %}
+                    <span class="badge badge-pass">PASS</span>
+                  {% else %}
+                    <span class="badge badge-fail">FAIL</span>
+                  {% endif %}
+                </td>
+                <td>{{ "%.2f"|format(item.score) }}</td>
+                <td>
+                  {% if item.failed_step_ids %}
+                    <span class="badge badge-fail">Steps {{ item.failed_step_ids|join(", ") }}</span>
+                  {% else %}
+                    <span style="color:var(--text-muted)">-</span>
+                  {% endif %}
+                </td>
+                <td>{{ item.reason }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    {% endif %}
+
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">
+          {% if diff %}Baseline vs Candidate Trajectory Timeline Diff{% else %}Execution Trajectory Timeline{% endif %}
+        </h2>
+        <div class="toolbar">
+          <button type="button" class="btn active" id="btn-filter-all" onclick="filterRows('all')">All Steps</button>
+          <button type="button" class="btn" id="btn-filter-issues" onclick="filterRows('issues')">Diverged / Failed Only</button>
+          <button type="button" class="btn" onclick="toggleAllDetails(true)">Expand All</button>
+          <button type="button" class="btn" onclick="toggleAllDetails(false)">Collapse All</button>
+        </div>
+      </div>
+
+      {% if diff %}
+        <div class="diff-columns-header">
+          <div class="lane-banner">
+            <div>
+              <strong>Baseline:</strong> {{ baseline.trace_id }}
+              <span style="color:var(--text-muted)">({{ baseline.agent_version }})</span>
+            </div>
+            <span class="badge {% if baseline.status == 'SUCCESS' %}badge-pass{% else %}badge-fail{% endif %}">{{ baseline.status }}</span>
+          </div>
+          <div class="lane-banner">
+            <div>
+              <strong>Candidate:</strong> {{ candidate.trace_id }}
+              <span style="color:var(--text-muted)">({{ candidate.agent_version }})</span>
+            </div>
+            <span class="badge {% if candidate.status == 'SUCCESS' %}badge-pass{% else %}badge-fail{% endif %}">{{ candidate.status }}</span>
+          </div>
+        </div>
+
+        {% for row in timeline_rows %}
+          <div class="timeline-row" data-has-issue="{{ 'true' if row.has_issue else 'false' }}">
+            {% if row.baseline %}
+              <div class="step-card">
+                <div class="step-top">
+                  <span class="step-id">Step {{ row.baseline.step_id }} &bull; {{ row.baseline.state }}</span>
+                  {% if row.baseline.tool_name %}
+                    <span class="badge badge-info">{{ row.baseline.tool_name }}</span>
+                  {% else %}
+                    <span class="badge badge-pass">NO TOOL</span>
+                  {% endif %}
+                </div>
+                <div class="step-meta">
+                  <span>tokens: {{ row.baseline.tokens.total_tokens }}</span>
+                  <span>latency: {{ "%.1f"|format(row.baseline.latency_ms) }} ms</span>
+                </div>
+                <details {% if row.has_issue %}open{% endif %}>
+                  <summary>Inspect thought, arguments &amp; observation</summary>
+                  {% if row.baseline.thought %}
+                    <div class="detail-block">
+                      <div class="detail-label">Thought</div>
+                      <div class="thought-box">{{ row.baseline.thought }}</div>
+                    </div>
+                  {% endif %}
+                  {% if row.baseline.tool_name %}
+                    <div class="detail-block">
+                      <div class="detail-label">Action Arguments</div>
+                      <pre>{{ row.baseline.arguments_pretty }}</pre>
+                    </div>
+                  {% endif %}
+                  {% if row.baseline.observation %}
+                    <div class="detail-block">
+                      <div class="detail-label">Observation {% if row.baseline.observation.is_error %}(ERROR){% endif %}{% if row.baseline.observation.is_mocked %} (MOCKED){% endif %}</div>
+                      <pre>{{ row.baseline.observation_pretty }}</pre>
+                    </div>
+                  {% endif %}
+                </details>
+              </div>
+            {% else %}
+              <div class="step-card empty-slot">No corresponding Baseline step</div>
+            {% endif %}
+
+            {% if row.candidate %}
+              <div class="step-card {% if row.is_diverged or row.is_candidate_failed %}diverged{% elif row.status == 'ARGS_DIFF' %}args-diff{% endif %}">
+                <div class="step-top">
+                  <span class="step-id">Step {{ row.candidate.step_id }} &bull; {{ row.candidate.state }}</span>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    {% if row.candidate.tool_name %}
+                      <span class="badge badge-info">{{ row.candidate.tool_name }}</span>
+                    {% endif %}
+                    {% if row.is_first_divergence %}
+                      <span class="badge badge-fail">FIRST DIVERGENCE</span>
+                    {% elif row.is_diverged %}
+                      <span class="badge badge-fail">{{ row.status }}</span>
+                    {% elif row.status == 'ARGS_DIFF' %}
+                      <span class="badge badge-warn">ARGS DIFF</span>
+                    {% else %}
+                      <span class="badge badge-pass">MATCH</span>
+                    {% endif %}
+                    {% if row.is_loop_step %}
+                      <span class="badge badge-fail">LOOP DETECTED</span>
+                    {% elif row.is_candidate_failed %}
+                      <span class="badge badge-fail">ASSERTION FAIL</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="step-meta">
+                  <span>tokens: {{ row.candidate.tokens.total_tokens }} ({{ "%+d"|format(row.token_delta) }})</span>
+                  <span>latency: {{ "%.1f"|format(row.candidate.latency_ms) }} ms</span>
+                </div>
+                <details {% if row.has_issue %}open{% endif %}>
+                  <summary>Inspect thought, arguments &amp; observation</summary>
+                  {% if row.candidate.thought %}
+                    <div class="detail-block">
+                      <div class="detail-label">Thought</div>
+                      <div class="thought-box">{{ row.candidate.thought }}</div>
+                    </div>
+                  {% endif %}
+                  {% if row.candidate.tool_name %}
+                    <div class="detail-block">
+                      <div class="detail-label">Action Arguments</div>
+                      <pre>{{ row.candidate.arguments_pretty }}</pre>
+                    </div>
+                  {% endif %}
+                  {% if row.candidate.observation %}
+                    <div class="detail-block">
+                      <div class="detail-label">Observation {% if row.candidate.observation.is_error %}(ERROR){% endif %}{% if row.candidate.observation.is_mocked %} (MOCKED){% endif %}</div>
+                      <pre>{{ row.candidate.observation_pretty }}</pre>
+                    </div>
+                  {% endif %}
+                </details>
+              </div>
+            {% else %}
+              <div class="step-card empty-slot">No corresponding Candidate step</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        {% for item in single_rows %}
+          <div class="timeline-row single-col" data-has-issue="{{ 'true' if item.has_issue else 'false' }}">
+            <div class="step-card {% if item.has_issue %}diverged{% endif %}">
+              <div class="step-top">
+                <span class="step-id">Step {{ item.step.step_id }} &bull; {{ item.step.state }}</span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  {% if item.step.tool_name %}
+                    <span class="badge badge-info">{{ item.step.tool_name }}</span>
+                  {% endif %}
+                  {% if item.is_loop_step %}
+                    <span class="badge badge-fail">LOOP DETECTED</span>
+                  {% elif item.is_failed %}
+                    <span class="badge badge-fail">ASSERTION FAIL</span>
+                  {% endif %}
+                  {% if item.step.observation and item.step.observation.is_error %}
+                    <span class="badge badge-fail">TOOL ERROR</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="step-meta">
+                <span>tokens: {{ item.step.tokens.total_tokens }}</span>
+                <span>latency: {{ "%.1f"|format(item.step.latency_ms) }} ms</span>
+              </div>
+              <details {% if item.has_issue %}open{% endif %}>
+                <summary>Inspect thought, arguments &amp; observation</summary>
+                {% if item.step.thought %}
+                  <div class="detail-block">
+                    <div class="detail-label">Thought</div>
+                    <div class="thought-box">{{ item.step.thought }}</div>
+                  </div>
+                {% endif %}
+                {% if item.step.tool_name %}
+                  <div class="detail-block">
+                    <div class="detail-label">Action Arguments</div>
+                    <pre>{{ item.step.arguments_pretty }}</pre>
+                  </div>
+                {% endif %}
+                {% if item.step.observation %}
+                  <div class="detail-block">
+                    <div class="detail-label">Observation</div>
+                    <pre>{{ item.step.observation_pretty }}</pre>
+                  </div>
+                {% endif %}
+              </details>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </section>
+  </div>
+
+  <script>
+    function toggleAllDetails(openState) {
+      document.querySelectorAll('details').forEach(function (el) {
+        el.open = openState;
+      });
+    }
+
+    function filterRows(mode) {
+      const allBtn = document.getElementById('btn-filter-all');
+      const issuesBtn = document.getElementById('btn-filter-issues');
+      if (allBtn && issuesBtn) {
+        allBtn.classList.toggle('active', mode === 'all');
+        issuesBtn.classList.toggle('active', mode === 'issues');
+      }
+      document.querySelectorAll('.timeline-row').forEach(function (row) {
+        if (mode === 'issues' && row.dataset.hasIssue !== 'true') {
+          row.classList.add('hidden');
+        } else {
+          row.classList.remove('hidden');
+        }
+      });
+    }
+  </script>
+</body>
+</html>
